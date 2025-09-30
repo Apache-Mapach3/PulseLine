@@ -4,38 +4,36 @@
  */
 package com.pulseline.domain;
 import com.pulseline.domain.enums.TipoCampania;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "campanias")
-/**
- *
- * @author Admin
- */
 public class Campania {
-@Id
+    @Id
     private String idCampania;
     private String nombre;
+
+    @Enumerated(EnumType.STRING)
+    private TipoCampania tipo;
+
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
 
     protected Campania() {}
-    
-    public Campania(String idCampania, String nombre, LocalDate inicio, LocalDate fin) {
+
+    public Campania(String idCampania, String nombre, TipoCampania tipo, LocalDate inicio, LocalDate fin) {
         this.idCampania = idCampania;
         this.nombre = nombre;
+        this.tipo = tipo;
         this.fechaInicio = inicio;
         this.fechaFin = fin;
     }
-    
-    // Getters y otros métodos
+
+    // --- Getters ---
     public String getIdCampania() { return idCampania; }
     public String getNombre() { return nombre; }
-
-    public TipoCampania getTipo() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    public TipoCampania getTipo() { return tipo; }
+    public LocalDate getFechaInicio() { return fechaInicio; }
+    public LocalDate getFechaFin() { return fechaFin; }
 }
