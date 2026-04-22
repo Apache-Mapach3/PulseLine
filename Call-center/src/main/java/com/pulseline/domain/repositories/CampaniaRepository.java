@@ -1,17 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
+package com.pulseline.domain.repositories;
 
-/**
- *
- * @author Admin
- */
 import com.pulseline.domain.Campania;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repositorio para el Agregado Campania.
+ * CORRECCIÓN: Se agregó la declaración de package que faltaba completamente.
+ */
 @Repository
 public interface CampaniaRepository extends JpaRepository<Campania, String> {
 }
-

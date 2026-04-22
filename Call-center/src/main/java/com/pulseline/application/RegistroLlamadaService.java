@@ -1,42 +1,94 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.pulseline.application;
+
+import com.pulseline.application.dto.LlamadaResponseDTO;
+import com.pulseline.application.dto.RegistrarLlamadaRequestDTO;
 import com.pulseline.domain.Llamada;
 import com.pulseline.domain.repositories.LlamadaRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
- *
- * @author Admin
+ * Servicio de Aplicación para gestionar los casos de uso de las Llamadas.
+ * CORRECCIÓN: Se agregó @Service para que Spring lo registre como bean inyectable.
  */
+@Service
 public class RegistroLlamadaService {
-    // El gerente tiene un contacto directo con el "bibliotecario" de llamadas.
+
     private final LlamadaRepository llamadaRepository;
 
-    // Cuando contratamos al gerente, le asignamos su bibliotecario.
     public RegistroLlamadaService(LlamadaRepository llamadaRepository) {
         this.llamadaRepository = llamadaRepository;
     }
 
-    // MÉTODO 1: Un caso de uso -> "Registrar una nueva llamada".
-    public void registrarNuevaLlamada(String idLlamada, String idAgente, String idCliente, int duracion) {
-        // Paso 1: El gerente crea un nuevo "capitán de equipo" Llamada.
-        Llamada nuevaLlamada = new Llamada(idLlamada, idAgente, idCliente, duracion);
-        
-        // Paso 2: El gerente le dice al bibliotecario: "Guarda este nuevo equipo".
-        llamadaRepository.save(nuevaLlamada);
+    /**
+     * Caso de uso: Registrar una nueva llamada.
+     */
+    @Transactional
+    public LlamadaResponseDTO registrarNuevaLlamada(RegistrarLlamadaRequestDTO dto) {
+        // Validación básica
+        if (llamadaRepository.existsById(dto.getNumeroLlamada())) {
+            throw new IllegalArgumentException("Ya existe una llamada con el número: " + dto.getNumeroLlamada());
+        }
+
+        Llamada nuevaLlamada = new Llamada(
+            dto.getNumeroLlamada(),
+            dto.getAgenteId(),
+            dto.getClienteId(),
+            dto.getDuracion()
+        );
+
+        Llamada guardada = llamadaRepository.save(nuevaLlamada);
+        return LlamadaResponseDTO.fromEntity(guardada);
     }
-    
-    // MÉTODO 2: Otro caso de uso -> "Escalar una llamada existente".
-    public void escalarLlamada(String idLlamada, String motivo) {
-        // Paso 1: El gerente le pide al bibliotecario que encuentre una Llamada específica.
+
+    /**
+     * Caso de uso: Escalar una llamada existente.
+     */
+    @Transactional
+    public LlamadaResponseDTO escalarLlamada(String idLlamada, String motivo) {
         Llamada llamada = llamadaRepository.findById(idLlamada)
-                .orElseThrow(() -> new RuntimeException("Llamada no encontrada")); // Si no la encuentra, se queja.
-        
-        // Paso 2: El gerente le da una orden directa al capitán: "¡Escálate con este motivo!".
-        llamada.escalar(motivo, java.time.LocalDate.now().plusDays(2));
-        
-        // Paso 3: El gerente le avisa al bibliotecario: "Guarda los cambios de este equipo".
-        llamadaRepository.save(llamada);
+                .orElseThrow(() -> new RuntimeException("Llamada no encontrada: " + idLlamada));
+
+        llamada.escalar(motivo, LocalDate.now().plusDays(2));
+        Llamada actualizada = llamadaRepository.save(llamada);
+        return LlamadaResponseDTO.fromEntity(actualizada);
+    }
+
+    /**
+     * Caso de uso: Marcar llamada como resuelta.
+     */
+    @Transactional
+    public LlamadaResponseDTO resolverLlamada(String idLlamada) {
+        Llamada llamada = llamadaRepository.findById(idLlamada)
+                .orElseThrow(() -> new RuntimeException("Llamada no encontrada: " + idLlamada));
+
+        llamada.marcarComoResuelta();
+        Llamada actualizada = llamadaRepository.save(llamada);
+        return LlamadaResponseDTO.fromEntity(actualizada);
+    }
+
+    /**
+     * Caso de uso: Consultar todas las llamadas.
+     */
+    @Transactional(readOnly = true)
+    public List<LlamadaResponseDTO> consultarTodasLasLlamadas() {
+        return llamadaRepository.findAll()
+                .stream()
+                .map(LlamadaResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Caso de uso: Consultar una llamada por ID.
+     */
+    @Transactional(readOnly = true)
+    public LlamadaResponseDTO consultarLlamadaPorId(String idLlamada) {
+        Llamada llamada = llamadaRepository.findById(idLlamada)
+                .orElseThrow(() -> new RuntimeException("Llamada no encontrada: " + idLlamada));
+        return LlamadaResponseDTO.fromEntity(llamada);
     }
 }
