@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.pulseline.application.dto;
 
-/**
- *
- * @author Admin
- */
 import com.pulseline.domain.Agente;
 import com.pulseline.domain.enums.NivelExperiencia;
 import java.util.List;
