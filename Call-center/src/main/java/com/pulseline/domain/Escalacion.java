@@ -1,16 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.pulseline.domain;
 
 import com.pulseline.domain.enums.EstadoEscalacion;
 import jakarta.persistence.*;
 import java.time.LocalDate;
-/**
- *
- * @author Admin
- */
 
 /**
  * Representa una Escalación, una Entidad que es parte del Agregado de Llamada.

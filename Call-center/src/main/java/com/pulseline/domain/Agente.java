@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.pulseline.domain;
 
 import com.pulseline.domain.enums.NivelExperiencia;
@@ -11,7 +7,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "agentes")
-public class Agente { // <-- Este archivo solo debe tener esta clase
+public class Agente {
 
     @Id
     private String idAgente;
