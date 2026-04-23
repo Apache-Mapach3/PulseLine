@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.pulseline.ui.MainFrame;
 import com.pulseline.ui.components.PulseTable;
 import com.pulseline.ui.utils.ApiClient;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -55,10 +54,14 @@ public class AgentesPanel extends JPanel {
 
         txtBuscar = buildTextField("Buscar agente...", 200);
 
-        JButton btnNuevo    = buildPrimaryButton("+ Nuevo Agente");
-        JButton btnRefresh  = buildSecondaryButton("↻");
+        JButton btnNuevo = buildPrimaryButton("+ Nuevo Agente");
+        JButton btnRefresh = buildSecondaryButton("↻");
         btnNuevo.addActionListener(e -> showFormNuevoAgente());
         btnRefresh.addActionListener(e -> loadAgentes());
+
+        // Ocultar acciones de edición si el usuario es AGENTE
+        boolean isAdmin = com.pulseline.ui.SessionContext.getInstance().isAdmin();
+        btnNuevo.setVisible(isAdmin);
 
         right.add(txtBuscar);
         right.add(btnNuevo);
@@ -101,9 +104,13 @@ public class AgentesPanel extends JPanel {
         actionBar.setBackground(new Color(0x172033));
         actionBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, MainFrame.BORDER_COLOR));
 
-        JLabel hint = new JLabel("💡 Doble clic en una fila para ver acciones");
+        boolean isAdmin = com.pulseline.ui.SessionContext.getInstance().isAdmin();
+        String hintText = isAdmin
+            ? "💡 Doble clic en una fila para ver acciones"
+            : "👁 Modo lectura — solo administradores pueden editar";
+        JLabel hint = new JLabel(hintText);
         hint.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        hint.setForeground(MainFrame.TEXT_MUTED);
+        hint.setForeground(isAdmin ? MainFrame.TEXT_MUTED : MainFrame.ACCENT_ORANGE);
         actionBar.add(hint);
 
         panel.add(scroll, BorderLayout.CENTER);
@@ -210,6 +217,10 @@ public class AgentesPanel extends JPanel {
     }
 
     private void showAcciones(String idAgente) {
+    if (!com.pulseline.ui.SessionContext.getInstance().isAdmin()) {
+        showError("Solo los administradores pueden realizar esta acción.");
+        return;
+    }
         int opcion = JOptionPane.showOptionDialog(this,
             "Agente: " + idAgente,
             "Acciones",
