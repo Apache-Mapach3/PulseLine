@@ -88,6 +88,7 @@ public class MainFrame extends JFrame {
 
         sidebar.add(Box.createVerticalGlue());
         sidebar.add(buildDivider());
+        sidebar.add(buildUserInfo());
         sidebar.add(buildStatusBar());
 
         return sidebar;
@@ -184,4 +185,62 @@ public class MainFrame extends JFrame {
         activeButton = btn;
         cardLayout.show(contentPanel, id);
     }
+    
+    private JPanel buildUserInfo() {
+     SessionContext session = SessionContext.getInstance();
+     JPanel bar = new JPanel(new BorderLayout());
+     bar.setBackground(MainFrame.BG_SIDEBAR);
+     bar.setBorder(new EmptyBorder(10, 16, 10, 16));
+     bar.setMaximumSize(new Dimension(230, 70));
+
+     // Badge de rol
+     String rolText = session.isAdmin() ? "ADMIN" : "AGENTE";
+     Color rolColor = session.isAdmin() ? MainFrame.ACCENT_GREEN : MainFrame.ACCENT_ORANGE;
+
+     JLabel lblNombre = new JLabel(session.getNombreUsuario());
+     lblNombre.setFont(new Font("SansSerif", Font.BOLD, 12));
+     lblNombre.setForeground(MainFrame.TEXT_PRIMARY);
+
+     JLabel lblRol = new JLabel(rolText);
+     lblRol.setFont(new Font("SansSerif", Font.BOLD, 10));
+     lblRol.setForeground(rolColor);
+     lblRol.setBorder(BorderFactory.createCompoundBorder(
+         BorderFactory.createLineBorder(rolColor, 1),
+         new EmptyBorder(1, 6, 1, 6)
+     ));
+
+     JLabel lblWorkspace = new JLabel(session.getWorkspaceNombre());
+     lblWorkspace.setFont(new Font("SansSerif", Font.PLAIN, 10));
+     lblWorkspace.setForeground(MainFrame.TEXT_MUTED);
+
+     JButton btnLogout = new JButton("Salir");
+     btnLogout.setBackground(new Color(0x334155));
+     btnLogout.setForeground(MainFrame.TEXT_MUTED);
+     btnLogout.setFont(new Font("SansSerif", Font.PLAIN, 10));
+     btnLogout.setBorder(new EmptyBorder(3, 8, 3, 8));
+     btnLogout.setFocusPainted(false);
+     btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+     btnLogout.addActionListener(e -> {
+         SessionContext.getInstance().cerrarSesion();
+         dispose();
+         new com.pulseline.ui.LoginFrame().setVisible(true);
+     });
+
+     JPanel left = new JPanel();
+     left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+     left.setOpaque(false);
+     left.add(lblNombre);
+     left.add(Box.createVerticalStrut(3));
+
+     JPanel rolRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+     rolRow.setOpaque(false);
+     rolRow.add(lblRol);
+     left.add(rolRow);
+     left.add(Box.createVerticalStrut(2));
+     left.add(lblWorkspace);
+
+     bar.add(left, BorderLayout.WEST);
+     bar.add(btnLogout, BorderLayout.EAST);
+     return bar;
+     }
 }

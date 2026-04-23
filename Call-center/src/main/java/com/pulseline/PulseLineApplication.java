@@ -1,6 +1,6 @@
 package com.pulseline;
 
-import com.pulseline.ui.PulseLineUI;
+import com.pulseline.ui.LoginFrame;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -9,14 +9,16 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class PulseLineApplication {
 
     public static void main(String[] args) {
-        // ← AGREGAR ESTA LÍNEA — debe ser lo PRIMERO antes de todo
         System.setProperty("java.awt.headless", "false");
 
-        // 1. Arrancar Spring Boot
+        // Arrancar Spring Boot
         ConfigurableApplicationContext context =
             SpringApplication.run(PulseLineApplication.class, args);
 
-        // 2. Lanzar la interfaz gráfica
-        PulseLineUI.launch();
+        // Lanzar pantalla de LOGIN (no el MainFrame directamente)
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            com.pulseline.ui.PulseLineUI.setupLookAndFeelStatic();
+            new LoginFrame().setVisible(true);
+        });
     }
 }
