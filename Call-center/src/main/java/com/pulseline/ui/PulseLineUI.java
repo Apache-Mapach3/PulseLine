@@ -2,7 +2,6 @@ package com.pulseline.ui;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
-import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 
 import javax.swing.*;
 import java.awt.*;
