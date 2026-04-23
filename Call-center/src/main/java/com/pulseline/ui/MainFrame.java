@@ -2,7 +2,6 @@ package com.pulseline.ui;
 
 import com.pulseline.ui.panels.*;
 import com.pulseline.ui.components.SidebarButton;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -155,7 +154,7 @@ public class MainFrame extends JFrame {
         dot.setForeground(ACCENT_GREEN);
         dot.setFont(new Font("SansSerif", Font.PLAIN, 10));
 
-        JLabel status = new JLabel("API activa en :8080");
+        JLabel status = new JLabel("API activa en :8081");
         status.setFont(new Font("SansSerif", Font.PLAIN, 11));
         status.setForeground(TEXT_MUTED);
 
