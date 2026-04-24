@@ -70,6 +70,22 @@ public class ApiClient {
         return mapper.readTree(response.body());
     }
 
+    // ── PUT ──────────────────────────────────────────────────────────────────────
+
+        public static JsonNode put(String path, Object body) throws IOException, InterruptedException {
+            String json = mapper.writeValueAsString(body);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + path))
+                    .PUT(HttpRequest.BodyPublishers.ofString(json))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .build();
+
+            HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            checkError(response);
+            return mapper.readTree(response.body());
+}
     // ── DELETE ───────────────────────────────────────────────────────────────
 
     public static void delete(String path) throws IOException, InterruptedException {

@@ -2,6 +2,7 @@ package com.pulseline.ui.panels;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pulseline.ui.MainFrame;
+import com.pulseline.ui.SessionContext;
 import com.pulseline.ui.components.PulseTable;
 import com.pulseline.ui.utils.ApiClient;
 
@@ -11,12 +12,10 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Panel de gestión de Llamadas — registrar, escalar y resolver.
- */
 public class LlamadasPanel extends JPanel {
 
     private PulseTable tabla;
+    private final boolean isAdmin = SessionContext.getInstance().isAdmin();
 
     public LlamadasPanel() {
         setBackground(MainFrame.BG_PANEL);
@@ -35,9 +34,11 @@ public class LlamadasPanel extends JPanel {
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setOpaque(false);
+
         JLabel title = new JLabel("Llamadas");
         title.setFont(new Font("SansSerif", Font.BOLD, 24));
         title.setForeground(MainFrame.TEXT_PRIMARY);
+
         JLabel sub = new JLabel("Registro y seguimiento de llamadas");
         sub.setFont(new Font("SansSerif", Font.PLAIN, 13));
         sub.setForeground(MainFrame.TEXT_MUTED);
@@ -46,11 +47,15 @@ public class LlamadasPanel extends JPanel {
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setOpaque(false);
-        JButton btnNueva   = buildPrimaryButton("+ Registrar Llamada");
-        JButton btnRefresh = buildSecondaryButton("↻");
-        btnNueva.addActionListener(e -> showFormNueva());
+
+        JButton btnRefresh = buildSecondaryButton("↻ Actualizar");
         btnRefresh.addActionListener(e -> loadLlamadas());
-        right.add(btnNueva);
+
+        if (isAdmin) {
+            JButton btnNueva = buildPrimaryButton("+ Registrar Llamada");
+            btnNueva.addActionListener(e -> showFormNueva());
+            right.add(btnNueva);
+        }
         right.add(btnRefresh);
 
         header.add(left, BorderLayout.WEST);
@@ -62,45 +67,52 @@ public class LlamadasPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
 
-        tabla = new PulseTable(new String[]{"N° Llamada", "Agente", "Cliente", "Duración (s)", "Fecha/Hora", "Estado"});
+        tabla = new PulseTable(new String[]{
+            "N° Llamada", "Agente", "Cliente", "Duración (s)", "Fecha/Hora", "Estado"
+        });
         tabla.getColumnModel().getColumn(5).setCellRenderer(new PulseTable.StatusRenderer());
         tabla.getColumnModel().getColumn(5).setPreferredWidth(110);
 
-        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2 && tabla.getSelectedRow() >= 0) {
-                    String id     = tabla.getValueAt(tabla.getSelectedRow(), 0).toString();
-                    String estado = tabla.getValueAt(tabla.getSelectedRow(), 5).toString();
-                    showAcciones(id, estado);
+        if (isAdmin) {
+            tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    if (e.getClickCount() == 2 && tabla.getSelectedRow() >= 0) {
+                        String id     = tabla.getValueAt(tabla.getSelectedRow(), 0).toString();
+                        String estado = tabla.getValueAt(tabla.getSelectedRow(), 5).toString();
+                        showAcciones(id, estado);
+                    }
                 }
-            }
-        });
+            });
+        }
 
         JScrollPane scroll = new JScrollPane(tabla);
         scroll.setBackground(MainFrame.BG_CARD);
         scroll.getViewport().setBackground(MainFrame.BG_CARD);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.BORDER_COLOR));
 
-        // Leyenda de estados
-        JPanel legend = buildLegend();
         panel.add(scroll, BorderLayout.CENTER);
-        panel.add(legend, BorderLayout.SOUTH);
+        panel.add(buildLegend(), BorderLayout.SOUTH);
         return panel;
     }
 
     private JPanel buildLegend() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 8));
         bar.setBackground(new Color(0x172033));
-        bar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, MainFrame.BORDER_COLOR));
+        bar.setBorder(BorderFactory.createMatteBorder(
+            1, 0, 0, 0, MainFrame.BORDER_COLOR));
         bar.add(legendChip("PENDIENTE",  MainFrame.ACCENT_BLUE));
         bar.add(legendChip("RESUELTA",   MainFrame.ACCENT_GREEN));
         bar.add(legendChip("ESCALADA",   MainFrame.ACCENT_ORANGE));
         bar.add(legendChip("CANCELADA",  MainFrame.ACCENT_RED));
-        JLabel hint = new JLabel("  💡 Doble clic para escalar o resolver");
-        hint.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        hint.setForeground(MainFrame.TEXT_MUTED);
-        bar.add(hint);
+
+        String hint = isAdmin
+            ? "  💡 Doble clic para escalar o resolver"
+            : "  👁 Solo administradores pueden modificar llamadas";
+        JLabel hintLabel = new JLabel(hint);
+        hintLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        hintLabel.setForeground(isAdmin ? MainFrame.TEXT_MUTED : MainFrame.ACCENT_ORANGE);
+        bar.add(hintLabel);
         return bar;
     }
 
@@ -110,8 +122,6 @@ public class LlamadasPanel extends JPanel {
         l.setForeground(color);
         return l;
     }
-
-    // ── DATA ─────────────────────────────────────────────────────────────────
 
     private void loadLlamadas() {
         SwingWorker<JsonNode, Void> w = new SwingWorker<>() {
@@ -141,10 +151,9 @@ public class LlamadasPanel extends JPanel {
         w.execute();
     }
 
-    // ── FORMULARIOS ──────────────────────────────────────────────────────────
-
     private void showFormNueva() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Registrar Llamada", true);
+        JDialog dialog = new JDialog(
+            (Frame) SwingUtilities.getWindowAncestor(this), "Registrar Llamada", true);
         dialog.setSize(440, 320);
         dialog.setLocationRelativeTo(this);
 
@@ -162,10 +171,10 @@ public class LlamadasPanel extends JPanel {
         JTextField fDurSeg  = buildFormField();
         fDurSeg.setText("0");
 
-        addFormRow(panel, gbc, 0, "N° Llamada", fId);
-        addFormRow(panel, gbc, 1, "ID Agente",  fAgente);
-        addFormRow(panel, gbc, 2, "ID Cliente", fCliente);
-        addFormRow(panel, gbc, 3, "Duración (s)", fDurSeg);
+        addFormRow(panel, gbc, 0, "N° Llamada",   fId);
+        addFormRow(panel, gbc, 1, "ID Agente",     fAgente);
+        addFormRow(panel, gbc, 2, "ID Cliente",    fCliente);
+        addFormRow(panel, gbc, 3, "Duración (s)",  fDurSeg);
 
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         btns.setOpaque(false);
@@ -186,9 +195,12 @@ public class LlamadasPanel extends JPanel {
                     return null;
                 }
                 @Override protected void done() {
-                    try { get(); dialog.dispose(); loadLlamadas();
-                        showSuccess("Llamada registrada exitosamente."); }
-                    catch (Exception ex) { showError(ex.getMessage()); }
+                    try {
+                        get();
+                        dialog.dispose();
+                        loadLlamadas();
+                        showSuccess("Llamada registrada exitosamente.");
+                    } catch (Exception ex) { showError(ex.getMessage()); }
                 }
             };
             w.execute();
@@ -223,7 +235,8 @@ public class LlamadasPanel extends JPanel {
             ejecutarAccion(id, "resolver", null);
         } else if (opcion == 1) {
             String motivo = JOptionPane.showInputDialog(this,
-                "Motivo de escalación:", "Escalar Llamada", JOptionPane.PLAIN_MESSAGE);
+                "Motivo de escalación:", "Escalar Llamada",
+                JOptionPane.PLAIN_MESSAGE);
             if (motivo != null && !motivo.isBlank()) {
                 Map<String, Object> body = new HashMap<>();
                 body.put("motivo", motivo);
@@ -239,16 +252,18 @@ public class LlamadasPanel extends JPanel {
                 return null;
             }
             @Override protected void done() {
-                try { get(); loadLlamadas(); showSuccess("Llamada " + accion + " exitosamente."); }
-                catch (Exception ex) { showError(ex.getMessage()); }
+                try {
+                    get();
+                    loadLlamadas();
+                    showSuccess("Llamada " + accion + " exitosamente.");
+                } catch (Exception ex) { showError(ex.getMessage()); }
             }
         };
         w.execute();
     }
 
-    // ── HELPERS ──────────────────────────────────────────────────────────────
-
-    private void addFormRow(JPanel p, GridBagConstraints gbc, int row, String label, JComponent field) {
+    private void addFormRow(JPanel p, GridBagConstraints gbc,
+                             int row, String label, JComponent field) {
         gbc.gridy = row; gbc.gridx = 0; gbc.gridwidth = 1; gbc.weightx = 0.35;
         JLabel lbl = new JLabel(label);
         lbl.setForeground(MainFrame.TEXT_MUTED);
@@ -271,26 +286,33 @@ public class LlamadasPanel extends JPanel {
 
     private JButton buildPrimaryButton(String t) {
         JButton b = new JButton(t);
-        b.setBackground(MainFrame.ACCENT_BLUE); b.setForeground(Color.WHITE);
+        b.setBackground(MainFrame.ACCENT_BLUE);
+        b.setForeground(Color.WHITE);
         b.setFont(new Font("SansSerif", Font.BOLD, 12));
         b.setBorder(new EmptyBorder(8, 16, 8, 16));
-        b.setFocusPainted(false); b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setFocusPainted(false);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
     private JButton buildSecondaryButton(String t) {
         JButton b = new JButton(t);
-        b.setBackground(new Color(0x334155)); b.setForeground(MainFrame.TEXT_PRIMARY);
+        b.setBackground(new Color(0x334155));
+        b.setForeground(MainFrame.TEXT_PRIMARY);
         b.setFont(new Font("SansSerif", Font.PLAIN, 12));
         b.setBorder(new EmptyBorder(8, 14, 8, 14));
-        b.setFocusPainted(false); b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setFocusPainted(false);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
     private void showSuccess(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, msg, "Éxito",
+            JOptionPane.INFORMATION_MESSAGE);
     }
+
     private void showError(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, msg, "Error",
+            JOptionPane.ERROR_MESSAGE);
     }
 }
