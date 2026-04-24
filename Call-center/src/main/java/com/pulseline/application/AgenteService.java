@@ -1,12 +1,11 @@
 package com.pulseline.application;
-
+import com.pulseline.domain.enums.NivelExperiencia;
 import com.pulseline.application.dto.AgenteResponseDTO;
 import com.pulseline.application.dto.CrearAgenteRequestDTO;
 import com.pulseline.domain.Agente;
 import com.pulseline.domain.repositories.AgenteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -70,5 +69,18 @@ public class AgenteService {
             throw new RuntimeException("Agente no encontrado: " + idAgente);
         }
         agenteRepository.deleteById(idAgente);
+    }
+    
+    @Transactional
+    public AgenteResponseDTO actualizarAgente(String idAgente,
+            String nombreCompleto, String email,
+            String telefono, NivelExperiencia nivel) {
+
+        Agente agente = agenteRepository.findById(idAgente)
+                .orElseThrow(() -> new RuntimeException("Agente no encontrado: " + idAgente));
+
+        // Actualizar campos permitidos
+        agente.actualizarDatosCompletos(nombreCompleto, email, telefono, nivel);
+        return AgenteResponseDTO.fromEntity(agenteRepository.save(agente));
     }
 }

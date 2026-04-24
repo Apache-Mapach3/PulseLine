@@ -2,6 +2,7 @@ package com.pulseline.ui.panels;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pulseline.ui.MainFrame;
+import com.pulseline.ui.SessionContext;
 import com.pulseline.ui.components.PulseTable;
 import com.pulseline.ui.utils.ApiClient;
 
@@ -11,12 +12,10 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Panel de gestión de Campañas.
- */
 public class CampaniasPanel extends JPanel {
 
     private PulseTable tabla;
+    private final boolean isAdmin = SessionContext.getInstance().isAdmin();
 
     public CampaniasPanel() {
         setBackground(MainFrame.BG_PANEL);
@@ -35,9 +34,11 @@ public class CampaniasPanel extends JPanel {
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setOpaque(false);
+
         JLabel title = new JLabel("Campañas");
         title.setFont(new Font("SansSerif", Font.BOLD, 24));
         title.setForeground(MainFrame.TEXT_PRIMARY);
+
         JLabel sub = new JLabel("Gestión de campañas de atención");
         sub.setFont(new Font("SansSerif", Font.PLAIN, 13));
         sub.setForeground(MainFrame.TEXT_MUTED);
@@ -46,14 +47,18 @@ public class CampaniasPanel extends JPanel {
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setOpaque(false);
-        JButton btnNueva   = buildPrimaryButton("+ Nueva Campaña");
-        JButton btnAsignar = buildSecondaryButton("Asignar Agente");
-        JButton btnRefresh = buildSecondaryButton("↻");
-        btnNueva.addActionListener(e -> showFormNueva());
-        btnAsignar.addActionListener(e -> showFormAsignar());
+
+        JButton btnRefresh = buildSecondaryButton("↻ Actualizar");
         btnRefresh.addActionListener(e -> loadCampanias());
-        right.add(btnAsignar);
-        right.add(btnNueva);
+
+        if (isAdmin) {
+            JButton btnNueva   = buildPrimaryButton("+ Nueva Campaña");
+            JButton btnAsignar = buildSecondaryButton("Asignar Agente");
+            btnNueva.addActionListener(e -> showFormNueva());
+            btnAsignar.addActionListener(e -> showFormAsignar());
+            right.add(btnAsignar);
+            right.add(btnNueva);
+        }
         right.add(btnRefresh);
 
         header.add(left, BorderLayout.WEST);
@@ -65,7 +70,9 @@ public class CampaniasPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
 
-        tabla = new PulseTable(new String[]{"ID Campaña", "Nombre", "Tipo", "Fecha Inicio", "Fecha Fin"});
+        tabla = new PulseTable(new String[]{
+            "ID Campaña", "Nombre", "Tipo", "Fecha Inicio", "Fecha Fin"
+        });
         tabla.getColumnModel().getColumn(2).setCellRenderer(new PulseTable.StatusRenderer());
         tabla.getColumnModel().getColumn(0).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(1).setPreferredWidth(220);
@@ -75,15 +82,24 @@ public class CampaniasPanel extends JPanel {
         scroll.getViewport().setBackground(MainFrame.BG_CARD);
         scroll.setBorder(BorderFactory.createLineBorder(MainFrame.BORDER_COLOR));
 
-        // Tipos de campaña - leyenda de colores
         JPanel legend = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 8));
         legend.setBackground(new Color(0x172033));
-        legend.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, MainFrame.BORDER_COLOR));
-        for (String tipo : new String[]{"VENTAS", "SOPORTE_TECNICO", "COBRANZAS", "ENCUESTAS"}) {
+        legend.setBorder(BorderFactory.createMatteBorder(
+            1, 0, 0, 0, MainFrame.BORDER_COLOR));
+
+        for (String tipo : new String[]{
+            "VENTAS", "SOPORTE_TECNICO", "COBRANZAS", "ENCUESTAS"}) {
             JLabel l = new JLabel("■ " + tipo);
             l.setFont(new Font("SansSerif", Font.PLAIN, 11));
             l.setForeground(MainFrame.TEXT_MUTED);
             legend.add(l);
+        }
+
+        if (!isAdmin) {
+            JLabel badge = new JLabel("  👁 Modo lectura");
+            badge.setFont(new Font("SansSerif", Font.BOLD, 11));
+            badge.setForeground(MainFrame.ACCENT_ORANGE);
+            legend.add(badge);
         }
 
         panel.add(scroll, BorderLayout.CENTER);
@@ -117,7 +133,8 @@ public class CampaniasPanel extends JPanel {
     }
 
     private void showFormNueva() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Nueva Campaña", true);
+        JDialog dialog = new JDialog(
+            (Frame) SwingUtilities.getWindowAncestor(this), "Nueva Campaña", true);
         dialog.setSize(440, 360);
         dialog.setLocationRelativeTo(this);
 
@@ -131,17 +148,18 @@ public class CampaniasPanel extends JPanel {
 
         JTextField fId     = buildFormField();
         JTextField fNombre = buildFormField();
-        JComboBox<String> fTipo = new JComboBox<>(new String[]{"VENTAS", "SOPORTE_TECNICO", "COBRANZAS", "ENCUESTAS"});
+        JComboBox<String> fTipo = new JComboBox<>(
+            new String[]{"VENTAS", "SOPORTE_TECNICO", "COBRANZAS", "ENCUESTAS"});
         fTipo.setBackground(new Color(0x334155));
         fTipo.setForeground(MainFrame.TEXT_PRIMARY);
         JTextField fInicio = buildFormField(); fInicio.setText("2024-07-01");
         JTextField fFin    = buildFormField(); fFin.setText("2024-12-31");
 
-        addFormRow(panel, gbc, 0, "ID Campaña",   fId);
-        addFormRow(panel, gbc, 1, "Nombre",        fNombre);
-        addFormRow(panel, gbc, 2, "Tipo",          fTipo);
-        addFormRow(panel, gbc, 3, "Fecha Inicio",  fInicio);
-        addFormRow(panel, gbc, 4, "Fecha Fin",     fFin);
+        addFormRow(panel, gbc, 0, "ID Campaña",  fId);
+        addFormRow(panel, gbc, 1, "Nombre",       fNombre);
+        addFormRow(panel, gbc, 2, "Tipo",         fTipo);
+        addFormRow(panel, gbc, 3, "Fecha Inicio", fInicio);
+        addFormRow(panel, gbc, 4, "Fecha Fin",    fFin);
 
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         btns.setOpaque(false);
@@ -162,8 +180,12 @@ public class CampaniasPanel extends JPanel {
                     return null;
                 }
                 @Override protected void done() {
-                    try { get(); dialog.dispose(); loadCampanias(); showSuccess("Campaña creada."); }
-                    catch (Exception ex) { showError(ex.getMessage()); }
+                    try {
+                        get();
+                        dialog.dispose();
+                        loadCampanias();
+                        showSuccess("Campaña creada exitosamente.");
+                    } catch (Exception ex) { showError(ex.getMessage()); }
                 }
             };
             sw.execute();
@@ -189,10 +211,11 @@ public class CampaniasPanel extends JPanel {
         gbc.insets = new Insets(6, 0, 6, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
-        addFormRow(panel, gbc, 0, "ID Agente",   fAgente);
-        addFormRow(panel, gbc, 1, "ID Campaña",  fCampania);
+        addFormRow(panel, gbc, 0, "ID Agente",  fAgente);
+        addFormRow(panel, gbc, 1, "ID Campaña", fCampania);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Asignar Agente a Campaña",
+        int result = JOptionPane.showConfirmDialog(this, panel,
+            "Asignar Agente a Campaña",
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -201,19 +224,23 @@ public class CampaniasPanel extends JPanel {
 
             SwingWorker<Void, Void> w = new SwingWorker<>() {
                 @Override protected Void doInBackground() throws Exception {
-                    ApiClient.post("/campanias/" + fCampania.getText().trim() + "/asignar", body);
+                    ApiClient.post(
+                        "/campanias/" + fCampania.getText().trim() + "/asignar", body);
                     return null;
                 }
                 @Override protected void done() {
-                    try { get(); showSuccess("Agente asignado a la campaña exitosamente."); }
-                    catch (Exception ex) { showError(ex.getMessage()); }
+                    try {
+                        get();
+                        showSuccess("Agente asignado a la campaña exitosamente.");
+                    } catch (Exception ex) { showError(ex.getMessage()); }
                 }
             };
             w.execute();
         }
     }
 
-    private void addFormRow(JPanel p, GridBagConstraints gbc, int row, String label, JComponent field) {
+    private void addFormRow(JPanel p, GridBagConstraints gbc,
+                             int row, String label, JComponent field) {
         gbc.gridy = row; gbc.gridx = 0; gbc.gridwidth = 1; gbc.weightx = 0.35;
         JLabel lbl = new JLabel(label);
         lbl.setForeground(MainFrame.TEXT_MUTED);
@@ -236,26 +263,33 @@ public class CampaniasPanel extends JPanel {
 
     private JButton buildPrimaryButton(String t) {
         JButton b = new JButton(t);
-        b.setBackground(MainFrame.ACCENT_BLUE); b.setForeground(Color.WHITE);
+        b.setBackground(MainFrame.ACCENT_BLUE);
+        b.setForeground(Color.WHITE);
         b.setFont(new Font("SansSerif", Font.BOLD, 12));
         b.setBorder(new EmptyBorder(8, 16, 8, 16));
-        b.setFocusPainted(false); b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setFocusPainted(false);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
     private JButton buildSecondaryButton(String t) {
         JButton b = new JButton(t);
-        b.setBackground(new Color(0x334155)); b.setForeground(MainFrame.TEXT_PRIMARY);
+        b.setBackground(new Color(0x334155));
+        b.setForeground(MainFrame.TEXT_PRIMARY);
         b.setFont(new Font("SansSerif", Font.PLAIN, 12));
         b.setBorder(new EmptyBorder(8, 14, 8, 14));
-        b.setFocusPainted(false); b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setFocusPainted(false);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }
 
     private void showSuccess(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, msg, "Éxito",
+            JOptionPane.INFORMATION_MESSAGE);
     }
+
     private void showError(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, msg, "Error",
+            JOptionPane.ERROR_MESSAGE);
     }
 }

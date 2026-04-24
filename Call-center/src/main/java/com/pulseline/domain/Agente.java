@@ -49,6 +49,18 @@ public class Agente {
         }
     }
     
+    public void actualizarDatosCompletos(String nombreCompleto, String email,
+                                      String telefono, NivelExperiencia nivel) {
+    if (nombreCompleto != null && !nombreCompleto.isBlank())
+        this.nombreCompleto = nombreCompleto;
+    if (email != null && !email.isBlank())
+        this.email = email;
+    if (telefono != null && !telefono.isBlank())
+        this.telefono = telefono;
+    if (nivel != null)
+        this.nivelExperiencia = nivel;
+}
+    
     public String getIdAgente() { return idAgente; }
     public String getNombreCompleto() { return nombreCompleto; }
     public String getNumeroEmpleado() { return numeroEmpleado; }

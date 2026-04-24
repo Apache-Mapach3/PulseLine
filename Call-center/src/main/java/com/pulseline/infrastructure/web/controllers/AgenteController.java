@@ -1,12 +1,12 @@
 package com.pulseline.infrastructure.web.controllers;
-
+import com.pulseline.domain.enums.NivelExperiencia;
+import java.util.Map;
 import com.pulseline.application.AgenteService;
 import com.pulseline.application.dto.AgenteResponseDTO;
 import com.pulseline.application.dto.CrearAgenteRequestDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 /**
@@ -49,5 +49,26 @@ public class AgenteController {
     public ResponseEntity<Void> eliminarAgente(@PathVariable String id) {
         agenteService.eliminarAgente(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    /** PUT /api/agentes/{id} — Actualizar agente */
+    @PutMapping("/{id}")
+    public ResponseEntity<AgenteResponseDTO> actualizarAgente(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+
+        NivelExperiencia nivel = null;
+        if (body.get("nivelExperiencia") != null) {
+            nivel = NivelExperiencia.valueOf(body.get("nivelExperiencia"));
+        }
+
+        AgenteResponseDTO respuesta = agenteService.actualizarAgente(
+            id,
+            body.get("nombreCompleto"),
+            body.get("email"),
+            body.get("telefono"),
+            nivel
+        );
+        return ResponseEntity.ok(respuesta);
     }
 }
